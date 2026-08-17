@@ -1,0 +1,29 @@
+{
+  "name": "@foothill/logs-benchmark",
+  "version": "0.1.0",
+  "description": "Score your Log Ingestion and Query Service locally with the platform's own scorer",
+  "type": "module",
+  "bin": {
+    "logs-benchmark": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "bun run build.ts",
+    "prepack": "bun run build.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "start": "bun run src/index.ts"
+  },
+  "devDependencies": {
+    "@load-generator/scoring": "workspace:*",
+    "@load-generator/tester": "workspace:*",
+    "@types/bun": "^1.3.14",
+    "typescript": "^5.9.2"
+  }
+}
