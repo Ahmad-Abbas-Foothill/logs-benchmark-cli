@@ -7,7 +7,9 @@ submission platform runs.
 
 - **Node 20+** — no Bun needed
 - **Docker** — your service and its database run under Compose
-- **k6** — `brew install k6`, `choco install k6`, or see <https://k6.io/docs/get-started/installation/>
+
+The default runner uses the pinned `grafana/k6:0.54.0` Docker image, so a host
+k6 installation is not required.
 
 ## Install
 
@@ -45,16 +47,23 @@ comparable to a graded run.
 
 **Correctness points match the platform exactly.**
 
-**Performance points will not.** The load generator and your service share one
-machine here; on the platform they do not. Treat local performance as a range
-check — "am I near 15k/s or near 3k/s" — not as your score.
+**Performance points are indicative.** The load generator runs on the same Docker
+engine and Compose network as the service with its own CPU budget. This removes
+the host-versus-VM difference between Linux, macOS, and Windows, but half of a
+fast CPU core still does more work than half of a slow core.
+
+The benchmark issues aggregate queries through an independent one-request-per-second
+scenario. Performance latency and error rate come only from `POST /logs`; query
+traffic cannot inflate the ingestion score. If k6 drops a scheduled ingestion
+iteration, the CLI rejects the run without producing a misleading score. Close
+CPU-heavy applications or raise `--generator-cpus` and retry.
 
 Two defaults also differ from the platform, for speed:
 
-| | Local default | Platform | Restore with |
-|---|---|---|---|
-| Scenario length | 0.25x | 1x | `--full` |
-| Seeded rows | 25,000 | 1,000,000 | `--full` |
+|                 | Local default | Platform  | Restore with |
+| --------------- | ------------- | --------- | ------------ |
+| Scenario length | 0.25x         | 1x        | `--full`     |
+| Seeded rows     | 25,000        | 1,000,000 | `--full`     |
 
 `--full` is slow — a 1M-row seed plus full-length stages takes a while.
 
@@ -68,8 +77,8 @@ Optimize for the API contract, not for the strings this tool happens to produce.
 
 ## Exit codes
 
-| Code | Meaning |
-|---|---|
-| `0` | The run completed and a score was produced |
-| `1` | The run failed — service unhealthy, Compose error, k6 failure |
-| `2` | Bad usage — unknown flag or invalid value |
+| Code | Meaning                                                                         |
+| ---- | ------------------------------------------------------------------------------- |
+| `0`  | The run completed and a score was produced                                      |
+| `1`  | The run failed — service unhealthy, Compose/k6 failure, or generator starvation |
+| `2`  | Bad usage — unknown flag or invalid value                                       |
