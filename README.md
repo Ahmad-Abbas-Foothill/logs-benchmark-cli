@@ -47,16 +47,31 @@ comparable to a graded run.
 
 **Correctness points match the platform exactly.**
 
-**Performance points are indicative.** The load generator runs on the same Docker
-engine and Compose network as the service with its own CPU budget. This removes
-the host-versus-VM difference between Linux, macOS, and Windows, but half of a
-fast CPU core still does more work than half of a slow core.
+**Performance points are indicative, and they depend on your machine.** The load
+generator runs on the same Docker engine and Compose network as the service with
+its own CPU budget, which removes the host-versus-VM difference between Linux,
+macOS, and Windows. What it cannot remove is core speed: half of a fast core does
+considerably more work than half of a slow one, and nothing here normalises for
+that. A fast laptop can score twenty points or more above a slower machine or a
+loaded CI runner on the *same* submission, so treat the performance, queries, and
+reliability numbers as a signal about your code's shape, not as a prediction of
+your grade. Quote the reported Docker engine capacity whenever you compare two
+runs, and only compare runs from the same machine.
 
-The benchmark issues aggregate queries through an independent one-request-per-second
-scenario. Performance latency and error rate come only from `POST /logs`; query
-traffic cannot inflate the ingestion score. If k6 drops a scheduled ingestion
-iteration, the CLI rejects the run without producing a misleading score. Close
-CPU-heavy applications or raise `--generator-cpus` and retry.
+Correctness is the part that transfers. If you want one number to optimise
+against, optimise 15/15 checks first: a single failing check caps the whole score
+and costs more than the entire queries category.
+
+The benchmark issues aggregate queries through an independent scenario at four
+requests per second, so its p95 is measured over enough samples to mean
+something. Performance latency and error rate come only from `POST /logs`; query
+traffic cannot inflate the ingestion score.
+
+If k6 cannot start every scheduled iteration, the scenario is **retained** and
+the CLI warns. That shortfall can mean either that your service applied
+backpressure or that the generator ran out of room, and the two are not
+distinguishable from the outside — so the number is kept rather than thrown away.
+Closing CPU-heavy applications or raising `--generator-cpus` may change it.
 
 Two defaults also differ from the platform, for speed:
 
@@ -77,8 +92,9 @@ Optimize for the API contract, not for the strings this tool happens to produce.
 
 ## Exit codes
 
-| Code | Meaning                                                                         |
-| ---- | ------------------------------------------------------------------------------- |
-| `0`  | The run completed and a score was produced                                      |
-| `1`  | The run failed — service unhealthy, Compose/k6 failure, or generator starvation |
-| `2`  | Bad usage — unknown flag or invalid value                                       |
+| Code | Meaning                                                    |
+| ---- | ---------------------------------------------------------- |
+| `0`  | The run completed and a score was produced                 |
+| `1`  | The run failed — service unhealthy, or a Compose/k6 failure |
+| `2`  | Bad usage — unknown flag or invalid value                   |
+| `130`| Interrupted — the stack was torn down                      |

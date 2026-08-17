@@ -1,6 +1,6 @@
 {
   "name": "@foothill/logs-benchmark",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Score your Log Ingestion and Query Service locally with the platform's own scorer",
   "type": "module",
   "bin": {
